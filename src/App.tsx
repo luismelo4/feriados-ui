@@ -52,6 +52,13 @@ type Municipality = {
   confidence: number;
 };
 
+type District = {
+  district: string;
+  municipality_count: number;
+  municipality_names: string[];
+  available_years: number[];
+};
+
 type Source = {
   id: string;
   name: string;
@@ -133,12 +140,26 @@ function getInitialParam(name: string) {
   return new URLSearchParams(window.location.search).get(name) ?? "";
 }
 
+function holidayKey(holiday: Holiday) {
+  return [
+    holiday.date,
+    holiday.scope,
+    holiday.name,
+    holiday.region ?? "",
+    holiday.district ?? "",
+    holiday.municipality ?? "",
+  ].join("|");
+}
+
 export function App() {
   const [year, setYear] = useState(getInitialYear);
   const [month, setMonth] = useState(getInitialMonth);
-  const [selectedRegion, setSelectedRegion] = useState(getInitialParam("region"));
+  const [selectedDistrict, setSelectedDistrict] = useState(
+    getInitialParam("district") || getInitialParam("region"),
+  );
   const [selectedMunicipality, setSelectedMunicipality] = useState(getInitialParam("municipality"));
   const [regions, setRegions] = useState<Region[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
   const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
   const [coverage, setCoverage] = useState<Coverage | null>(null);
@@ -157,31 +178,53 @@ export function App() {
   }, [coverage, year]);
 
   const sourceMap = useMemo(() => new Map(sources.map((source) => [source.id, source])), [sources]);
+  const regionalDistricts = useMemo(() => new Set(regions.map((region) => region.region)), [regions]);
+
+  const filteredMunicipalities = useMemo(
+    () =>
+      selectedDistrict
+        ? municipalities.filter((municipality) => municipality.district === selectedDistrict)
+        : municipalities,
+    [municipalities, selectedDistrict],
+  );
 
   const apiUrl = useMemo(() => {
     const params = new URLSearchParams({ year: String(year) });
-    if (selectedRegion) params.set("region", selectedRegion);
+    if (selectedDistrict) {
+      params.set("district", selectedDistrict);
+      if (regionalDistricts.has(selectedDistrict)) {
+        params.set("region", selectedDistrict);
+      }
+    }
     if (selectedMunicipality) params.set("municipality", selectedMunicipality);
     return `${API_BASE}/holidays?${params}`;
-  }, [year, selectedRegion, selectedMunicipality]);
+  }, [year, selectedDistrict, selectedMunicipality, regionalDistricts]);
 
   useEffect(() => {
     async function loadDiscovery() {
       try {
         setLoading(true);
-        const [regionsResponse, municipalitiesResponse, sourcesResponse, coverageResponse] =
+        const [regionsResponse, districtsResponse, municipalitiesResponse, sourcesResponse, coverageResponse] =
           await Promise.all([
             fetch(`${API_BASE}/regions`),
+            fetch(`${API_BASE}/districts`),
             fetch(`${API_BASE}/municipalities`),
             fetch(`${API_BASE}/sources`),
             fetch(`${API_BASE}/coverage`),
           ]);
 
-        if (!regionsResponse.ok || !municipalitiesResponse.ok || !sourcesResponse.ok || !coverageResponse.ok) {
+        if (
+          !regionsResponse.ok ||
+          !districtsResponse.ok ||
+          !municipalitiesResponse.ok ||
+          !sourcesResponse.ok ||
+          !coverageResponse.ok
+        ) {
           throw new Error("Nao foi possivel carregar os dados da API.");
         }
 
         setRegions(await regionsResponse.json());
+        setDistricts(await districtsResponse.json());
         setMunicipalities(await municipalitiesResponse.json());
         setSources(await sourcesResponse.json());
         setCoverage(await coverageResponse.json());
@@ -207,7 +250,7 @@ export function App() {
         const data = (await response.json()) as Holiday[];
         setHolidays(data);
         setSelectedHoliday((current) =>
-          current && data.some((holiday) => holiday.date === current.date && holiday.name === current.name)
+          current && data.some((holiday) => holidayKey(holiday) === holidayKey(current))
             ? current
             : null,
         );
@@ -225,10 +268,22 @@ export function App() {
 
   useEffect(() => {
     const params = new URLSearchParams({ year: String(year), month: String(month + 1) });
-    if (selectedRegion) params.set("region", selectedRegion);
+    if (selectedDistrict) params.set("district", selectedDistrict);
     if (selectedMunicipality) params.set("municipality", selectedMunicipality);
     window.history.replaceState(null, "", `?${params}`);
-  }, [year, month, selectedRegion, selectedMunicipality]);
+  }, [year, month, selectedDistrict, selectedMunicipality]);
+
+  useEffect(() => {
+    if (!selectedDistrict || !selectedMunicipality) return;
+    const municipalityStillAvailable = municipalities.some(
+      (municipality) =>
+        municipality.municipality === selectedMunicipality &&
+        municipality.district === selectedDistrict,
+    );
+    if (!municipalityStillAvailable) {
+      setSelectedMunicipality("");
+    }
+  }, [municipalities, selectedDistrict, selectedMunicipality]);
 
   const cells = useMemo(() => getCalendarCells(year, month), [year, month]);
 
@@ -254,7 +309,9 @@ export function App() {
   );
 
   const selectedMunicipalityDetails = municipalities.find(
-    (item) => item.municipality === selectedMunicipality,
+    (item) =>
+      item.municipality === selectedMunicipality &&
+      (!selectedDistrict || item.district === selectedDistrict),
   );
 
   function moveMonth(direction: -1 | 1) {
@@ -264,7 +321,7 @@ export function App() {
   }
 
   function resetFilters() {
-    setSelectedRegion("");
+    setSelectedDistrict("");
     setSelectedMunicipality("");
   }
 
@@ -289,7 +346,7 @@ export function App() {
 
         <div className="status-strip">
           <span>{coverage?.municipalities ?? 308} concelhos</span>
-          <span>{regions.length || 2} regioes</span>
+          <span>{districts.length || 20} territorios</span>
           <a href={`${API_BASE}/docs`} target="_blank" rel="noreferrer">
             API <ExternalLink size={14} />
           </a>
@@ -320,12 +377,12 @@ export function App() {
         </label>
 
         <label>
-          Regiao
-          <select value={selectedRegion} onChange={(event) => setSelectedRegion(event.target.value)}>
+          Distrito/Regiao
+          <select value={selectedDistrict} onChange={(event) => setSelectedDistrict(event.target.value)}>
             <option value="">Todas</option>
-            {regions.map((region) => (
-              <option key={region.region} value={region.region}>
-                {region.region}
+            {districts.map((district) => (
+              <option key={district.district} value={district.district}>
+                {district.district}
               </option>
             ))}
           </select>
@@ -343,7 +400,7 @@ export function App() {
             />
           </span>
           <datalist id="municipalities">
-            {municipalities.map((municipality) => (
+            {filteredMunicipalities.map((municipality) => (
               <option
                 key={`${municipality.municipality}-${municipality.district}`}
                 value={municipality.municipality}
@@ -428,7 +485,7 @@ export function App() {
                   {day && <span className="day-number">{day}</span>}
                   <span className="holiday-stack">
                     {dayHolidays.slice(0, 2).map((holiday) => (
-                      <span className={`holiday-pill ${holiday.scope}`} key={`${holiday.date}-${holiday.name}`}>
+                      <span className={`holiday-pill ${holiday.scope}`} key={holidayKey(holiday)}>
                         {holiday.name}
                       </span>
                     ))}
@@ -457,7 +514,7 @@ export function App() {
                 {monthHolidays.map((holiday) => (
                   <button
                     className={`holiday-row ${holiday.scope}`}
-                    key={`${holiday.date}-${holiday.name}-${holiday.scope}`}
+                    key={holidayKey(holiday)}
                     type="button"
                     onClick={() => setSelectedHoliday(holiday)}
                   >

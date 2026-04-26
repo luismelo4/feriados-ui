@@ -26,8 +26,9 @@ npm run build
 
 ```text
 GET /regions
+GET /districts
 GET /municipalities
 GET /coverage
 GET /sources
-GET /holidays?year=2026&region=Madeira&municipality=Funchal
+GET /holidays?year=2026&region=Madeira&district=Madeira&municipality=Funchal
 ```
