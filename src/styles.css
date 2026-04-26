@@ -402,6 +402,29 @@ input:focus {
   font-size: 1rem;
 }
 
+.scope-note {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  border-left: 4px solid #097a64;
+  border-radius: 12px;
+  padding: 11px 12px;
+  color: #243129;
+  background: #edf7f3;
+}
+
+.scope-note strong {
+  font-size: 0.92rem;
+}
+
+.scope-note span,
+.scope-note em {
+  color: #526058;
+  font-size: 0.84rem;
+  font-style: normal;
+  line-height: 1.35;
+}
+
 .holiday-list {
   display: grid;
   gap: 8px;

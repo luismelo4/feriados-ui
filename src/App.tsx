@@ -177,6 +177,11 @@ export function App() {
 
   const sourceMap = useMemo(() => new Map(sources.map((source) => [source.id, source])), [sources]);
   const regionalDistricts = useMemo(() => new Set(regions.map((region) => region.region)), [regions]);
+  const selectedDistrictDetails = useMemo(
+    () => districts.find((district) => district.district === selectedDistrict),
+    [districts, selectedDistrict],
+  );
+  const showMunicipalityScopeNote = Boolean(selectedDistrict && !selectedMunicipality);
 
   const filteredMunicipalities = useMemo(
     () =>
@@ -272,7 +277,7 @@ export function App() {
   }, [year, month, selectedDistrict, selectedMunicipality]);
 
   useEffect(() => {
-    if (!selectedDistrict || !selectedMunicipality) return;
+    if (!selectedDistrict || !selectedMunicipality || municipalities.length === 0) return;
     const municipalityStillAvailable = municipalities.some(
       (municipality) =>
         municipality.municipality === selectedMunicipality &&
@@ -339,9 +344,6 @@ export function App() {
         <div className="status-strip">
           <span>{coverage?.municipalities ?? 308} concelhos</span>
           <span>{districts.length || 20} territorios</span>
-          <a href={`${API_BASE}/docs`} target="_blank" rel="noreferrer">
-            API <ExternalLink size={14} />
-          </a>
         </div>
       </section>
 
@@ -487,6 +489,20 @@ export function App() {
               <MapPin size={18} />
               <h2>Feriados do mes</h2>
             </div>
+
+            {showMunicipalityScopeNote && (
+              <div className="scope-note">
+                <strong>{selectedDistrict}</strong>
+                <span>
+                  {regionalDistricts.has(selectedDistrict)
+                    ? "A mostrar feriados nacionais e regionais. Escolhe um concelho para acrescentar o feriado municipal correto."
+                    : "A mostrar feriados nacionais. Escolhe um concelho deste distrito para ver o feriado municipal correto."}
+                </span>
+                {selectedDistrictDetails && (
+                  <em>{selectedDistrictDetails.municipality_count} concelhos disponiveis</em>
+                )}
+              </div>
+            )}
 
             {loading || holidayLoading ? (
               <div className="loading">
