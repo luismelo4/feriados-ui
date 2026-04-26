@@ -7,7 +7,6 @@ import {
   FilterX,
   MapPin,
   RefreshCw,
-  Search,
   ShieldCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -201,6 +200,8 @@ export function App() {
         : municipalities,
     [municipalities, selectedDistrict],
   );
+  const municipalitySelectValue =
+    selectedDistrict && selectedMunicipality ? `${selectedDistrict}|${selectedMunicipality}` : "";
 
   const apiUrl = useMemo(() => {
     const params = new URLSearchParams({ year: String(year) });
@@ -339,6 +340,22 @@ export function App() {
     setSelectedMunicipality("");
   }
 
+  function selectDistrict(value: string) {
+    setSelectedDistrict(value);
+    setSelectedMunicipality("");
+  }
+
+  function selectMunicipality(value: string) {
+    if (!value) {
+      setSelectedMunicipality("");
+      return;
+    }
+
+    const [district, municipality] = value.split("|");
+    setSelectedDistrict(district);
+    setSelectedMunicipality(municipality);
+  }
+
   return (
     <main className="shell">
       <section className="topbar">
@@ -381,39 +398,31 @@ export function App() {
           </select>
         </label>
 
+        <label className="municipality-filter">
+          Concelho
+          <select value={municipalitySelectValue} onChange={(event) => selectMunicipality(event.target.value)}>
+            <option value="">Todos os concelhos</option>
+            {filteredMunicipalities.map((municipality) => (
+              <option
+                key={`${municipality.municipality}-${municipality.district}`}
+                value={`${municipality.district}|${municipality.municipality}`}
+              >
+                {municipality.municipality} ({municipality.district})
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label>
           Distrito/Regiao autonoma
-          <select value={selectedDistrict} onChange={(event) => setSelectedDistrict(event.target.value)}>
-            <option value="">Todas</option>
+          <select value={selectedDistrict} onChange={(event) => selectDistrict(event.target.value)}>
+            <option value="">Todos</option>
             {districts.map((district) => (
               <option key={district.district} value={district.district}>
                 {district.district}
               </option>
             ))}
           </select>
-        </label>
-
-        <label className="municipality-filter">
-          Concelho
-          <span className="search-box">
-            <Search size={16} />
-            <input
-              list="municipalities"
-              value={selectedMunicipality}
-              onChange={(event) => setSelectedMunicipality(event.target.value)}
-              placeholder="Pesquisar"
-            />
-          </span>
-          <datalist id="municipalities">
-            {filteredMunicipalities.map((municipality) => (
-              <option
-                key={`${municipality.municipality}-${municipality.district}`}
-                value={municipality.municipality}
-              >
-                {municipality.district}
-              </option>
-            ))}
-          </datalist>
         </label>
 
         <button className="icon-button" type="button" onClick={resetFilters} aria-label="Limpar filtros">
