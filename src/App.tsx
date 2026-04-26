@@ -3,7 +3,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleHelp,
-  Clipboard,
   ExternalLink,
   FilterX,
   MapPin,
@@ -169,7 +168,6 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [holidayLoading, setHolidayLoading] = useState(true);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
 
   const years = useMemo(() => {
     const coverageYears = coverage?.municipal_years ?? [];
@@ -325,12 +323,6 @@ export function App() {
     setSelectedMunicipality("");
   }
 
-  async function copyApiCall() {
-    await navigator.clipboard.writeText(apiUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
-  }
-
   return (
     <main className="shell">
       <section className="topbar">
@@ -413,14 +405,6 @@ export function App() {
 
         <button className="icon-button" type="button" onClick={resetFilters} aria-label="Limpar filtros">
           <FilterX size={18} />
-        </button>
-      </section>
-
-      <section className="api-bar">
-        <code>{apiUrl}</code>
-        <button type="button" onClick={copyApiCall}>
-          <Clipboard size={16} />
-          {copied ? "Copiado" : "Copiar"}
         </button>
       </section>
 

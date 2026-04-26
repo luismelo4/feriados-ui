@@ -90,7 +90,6 @@ h1 {
 }
 
 .status-strip,
-.api-bar,
 .toolbar,
 .calendar-panel,
 .side-panel,
@@ -189,32 +188,11 @@ input:focus {
 }
 
 .icon-button:hover,
-.api-bar button:hover,
 .link-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 26px rgba(23, 32, 24, 0.12);
 }
 
-.api-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  padding: 10px;
-  border-radius: 16px;
-}
-
-.api-bar code {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  color: #314137;
-  font-size: 0.86rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.api-bar button,
 .link-button {
   min-height: 40px;
   display: inline-flex;
@@ -574,15 +552,6 @@ dd {
 
   .municipality-filter {
     grid-column: 1 / -1;
-  }
-
-  .api-bar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .api-bar button {
-    width: 100%;
   }
 
   .calendar-grid {
