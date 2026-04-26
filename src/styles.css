@@ -425,6 +425,24 @@ input:focus {
   line-height: 1.35;
 }
 
+.inline-action {
+  width: max-content;
+  max-width: 100%;
+  min-height: 34px;
+  border: 1px solid rgba(9, 122, 100, 0.24);
+  border-radius: 10px;
+  padding: 0 11px;
+  color: #064f41;
+  background: #fff;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.inline-action:hover {
+  border-color: #097a64;
+  box-shadow: 0 8px 20px rgba(9, 122, 100, 0.12);
+}
+
 .holiday-list {
   display: grid;
   gap: 8px;

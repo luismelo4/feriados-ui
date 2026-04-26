@@ -182,6 +182,17 @@ export function App() {
     [districts, selectedDistrict],
   );
   const showMunicipalityScopeNote = Boolean(selectedDistrict && !selectedMunicipality);
+  const sameNameMunicipality = useMemo(
+    () =>
+      selectedDistrict
+        ? municipalities.find(
+            (municipality) =>
+              municipality.district === selectedDistrict &&
+              municipality.municipality === selectedDistrict,
+          )
+        : undefined,
+    [municipalities, selectedDistrict],
+  );
 
   const filteredMunicipalities = useMemo(
     () =>
@@ -371,7 +382,7 @@ export function App() {
         </label>
 
         <label>
-          Distrito/Regiao
+          Distrito/Regiao autonoma
           <select value={selectedDistrict} onChange={(event) => setSelectedDistrict(event.target.value)}>
             <option value="">Todas</option>
             {districts.map((district) => (
@@ -500,6 +511,15 @@ export function App() {
                 </span>
                 {selectedDistrictDetails && (
                   <em>{selectedDistrictDetails.municipality_count} concelhos disponiveis</em>
+                )}
+                {sameNameMunicipality && (
+                  <button
+                    className="inline-action"
+                    type="button"
+                    onClick={() => setSelectedMunicipality(sameNameMunicipality.municipality)}
+                  >
+                    Ver concelho {sameNameMunicipality.municipality}
+                  </button>
                 )}
               </div>
             )}
